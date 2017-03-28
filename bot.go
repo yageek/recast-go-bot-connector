@@ -29,7 +29,7 @@ type MessageWriter interface {
 
 type outMessagePayload struct {
 	Messages []OutputMessage `json:"messages"`
-	SenderID string          `json:"senderId"`
+	SenderID string          `json:"senderId,omitempty"`
 }
 
 type writer struct {
@@ -43,6 +43,12 @@ func replyURL(domain, userSlug, botID, conversationID string) (*url.URL, error) 
 	rawString := fmt.Sprintf("%s/users/%s/bots/%s/conversations/%s/messages", domain, userSlug, botID, conversationID)
 	return url.Parse(rawString)
 }
+
+func broadcastURL(domain, userSlug, botID string) (*url.URL, error) {
+	rawString := fmt.Sprintf("%s/users/%s/bots/%s/messages", domain, userSlug, botID)
+	return url.Parse(rawString)
+}
+
 func newWriter(conversationID, senderID string, c ConnConfig, client *http.Client) *writer {
 	return &writer{
 		conversationID: conversationID,
@@ -138,6 +144,20 @@ func (c *Connector) Send(message OutputMessage, conversationID, senderID string)
 		SenderID: senderID,
 	}
 	return sendJSON(c.client, sendURL, out, http.StatusCreated, c.config.UserToken)
+}
+
+// Broadcast send a message to all participant.
+func (c *Connector) Broadcast(message OutputMessage) error {
+	broadCastURL, err := broadcastURL(c.config.Domain, c.config.UserSlug, c.config.BotID)
+	if err != nil {
+		return err
+	}
+	out := outMessagePayload{
+		Messages: []OutputMessage{message},
+	}
+
+	return sendJSON(c.client, broadCastURL, out, http.StatusCreated, c.config.UserToken)
+
 }
 
 // New creates a new connector with

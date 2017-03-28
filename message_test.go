@@ -2,6 +2,7 @@ package botconn
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -59,7 +60,7 @@ func TestDecodeInputMessage(t *testing.T) {
 
 	validAttachment := Attachment{
 		Content: "Hello",
-		Type:    TextKind,
+		Kind:    TextKind,
 	}
 
 	if validAttachment != m.Attachment {
@@ -73,5 +74,32 @@ func TestDecodeInputMessage(t *testing.T) {
 			t.Errorf("Should decode Data: %+v \n", value)
 		}
 	}
+}
 
+func TestEncodeOutputMessage(t *testing.T) {
+	output := OutputMessage{
+		Kind:    TextKind,
+		Content: "Coucou",
+	}
+	value, err := json.Marshal(output)
+	if err != nil {
+		t.Errorf("Should have succeeded: %s \n", err)
+		t.FailNow()
+	}
+
+	var unmarshalled map[string]string
+
+	err = json.Unmarshal(value, &unmarshalled)
+	if err != nil {
+		t.FailNow()
+	}
+
+	expectedValue := map[string]string{
+		"content": "Coucou",
+		"type":    "text",
+	}
+
+	if !reflect.DeepEqual(expectedValue, unmarshalled) {
+		t.Errorf("Should be the same value - Expected: %+v | Computed: %+v \n", expectedValue, unmarshalled)
+	}
 }

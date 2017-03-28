@@ -10,6 +10,7 @@ import (
 var (
 	// ErrInvalidContent represent a generic unmarshalling error.
 	ErrInvalidContent = errors.New("The provided content is invalid.")
+	ErrInvalidKind    = errors.New("The provided content type is invalid.")
 )
 
 // ContentKind represents a kind of content
@@ -25,7 +26,7 @@ const (
 // Attachment contains the content of the message
 type Attachment struct {
 	Content string      `json:"content"`
-	Type    ContentKind `json:"type"`
+	Kind    ContentKind `json:"type"`
 }
 
 // InputMessage is a message received
@@ -84,7 +85,7 @@ func getAttachment(k string, values map[string]interface{}) (Attachment, error) 
 	}
 
 	return Attachment{
-		Type:    kind,
+		Kind:    kind,
 		Content: content,
 	}, nil
 }
@@ -94,7 +95,16 @@ func getKind(k string) (ContentKind, error) {
 	case "text":
 		return TextKind, nil
 	default:
-		return UnknownContent, ErrInvalidContent
+		return UnknownContent, ErrInvalidKind
+	}
+
+}
+func getKindString(k ContentKind) (string, error) {
+	switch k {
+	case TextKind:
+		return "text", nil
+	default:
+		return "", ErrInvalidKind
 	}
 
 }
@@ -166,4 +176,23 @@ func (i *InputMessage) UnmarshalJSON(data []byte) error {
 		i.Data = value
 	}
 	return nil
+}
+
+// OutputMessage is a message sent to from the bot.
+type OutputMessage struct {
+	Kind    ContentKind
+	Content string
+}
+
+func (o OutputMessage) MarshalJSON() ([]byte, error) {
+
+	kindString, err := getKindString(o.Kind)
+	if err != nil {
+		return []byte{}, err
+	}
+	rawOutput := map[string]string{
+		"type":    kindString,
+		"content": o.Content,
+	}
+	return json.Marshal(rawOutput)
 }

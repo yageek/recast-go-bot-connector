@@ -9,6 +9,7 @@ go get -u github.com/yageek/recast-go-bot-connector
 ```
 
 ## Usage
+### Catch and reply
 
 ```go
 package main
@@ -29,7 +30,7 @@ func main() {
 	conn := botconn.New(conf)
 	// Message routing
 	conn.UseHandler(botconn.MessageHandlerFunc(nextBus))
-    
+
 	// Router
 	mux := pat.New()
 	mux.Post("/chatbot", conn)
@@ -43,4 +44,18 @@ func nextBus(m botconn.InputMessage, c botconn.ConnConfig) {
 	fmt.Printf("Message: %+v config: %+v \n", m, c)
 }
 
+```
+### Push a message to one participant
+
+```go
+    output := botconn.OutputMessage{
+		Content: "Coucou",
+		Kind:    botconn.TextKind,
+	}
+    err := conn.Send(output, "CONVERSATION_ID", "SENDER_ID")
+    if err != nil {
+		fmt.Println("Error:", err)
+	} else {
+		fmt.Println("Response succeeded")
+	}
 ```

@@ -126,8 +126,18 @@ type Connector struct {
 	client  *http.Client
 }
 
+// Send a message
 func (c *Connector) Send(message OutputMessage, conversationID, senderID string) error {
-	return nil
+
+	sendURL, err := replyURL(c.config.Domain, c.config.UserSlug, c.config.BotID, conversationID)
+	if err != nil {
+		return err
+	}
+	out := outMessagePayload{
+		Messages: []OutputMessage{message},
+		SenderID: senderID,
+	}
+	return sendJSON(c.client, sendURL, out, http.StatusCreated, c.config.UserToken)
 }
 
 // New creates a new connector with

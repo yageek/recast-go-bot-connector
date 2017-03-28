@@ -1,6 +1,8 @@
-# go-bo-connector
+[![GoDoc](https://godoc.org/github.com/yageek/recast-go-bot-connector?status.png)](https://godoc.org/github.com/yageek/recast-go-bot-connector) 
+[![Report Cart](http://goreportcard.com/badge/yageek/recast-go-bot-connector)](http://goreportcard.com/report/yageek/recast-go-bot-connector)
+# recast-go-bot-connector
 
-Port of https://github.com/RecastAI/SDK-NodeJS-bot-connector.
+Package helping to deal with the [Recast.AI Bot Connector](https://botconnector.recast.ai/)
 
 ## Installation
 

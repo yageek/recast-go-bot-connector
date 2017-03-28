@@ -10,8 +10,9 @@ import (
 )
 
 var (
-	RecastAPIDomain    = "https://api-botconnector.recast.ai"
-	ErrResponseNotSent = errors.New("Message not sent")
+	RecastAPIDomain      = "https://api-botconnector.recast.ai"
+	ErrResponseNotSent   = errors.New("Message not sent")
+	ErrInvalidStatusCode = errors.New("invalid status code")
 )
 
 // MessageHandler is implemented
@@ -38,6 +39,10 @@ type writer struct {
 	client         *http.Client
 }
 
+func replyURL(domain, userSlug, botID, conversationID string) (*url.URL, error) {
+	rawString := fmt.Sprintf("%s/users/%s/bots/%s/conversations/%s/messages", domain, userSlug, botID, conversationID)
+	return url.Parse(rawString)
+}
 func newWriter(conversationID, senderID string, c ConnConfig, client *http.Client) *writer {
 	return &writer{
 		conversationID: conversationID,
@@ -49,42 +54,48 @@ func newWriter(conversationID, senderID string, c ConnConfig, client *http.Clien
 func (w *writer) replyURL() (*url.URL, error) {
 
 	c := w.config
-	rawString := fmt.Sprintf("%s/users/%s/bots/%s/conversations/%s/messages", c.Domain, c.UserSlug, c.BotID, w.conversationID)
-	return url.Parse(rawString)
+	return replyURL(c.Domain, c.UserSlug, c.BotID, w.conversationID)
 }
 func (w *writer) Reply(message OutputMessage) error {
 	return w.ReplyMultiple([]OutputMessage{message})
 }
 
-func (w *writer) ReplyMultiple(messages []OutputMessage) error {
+func sendJSON(client *http.Client, url *url.URL, v interface{}, statusCode int, token string) error {
 	// Try marshalling
 	buff := new(bytes.Buffer)
 
-	out := outMessagePayload{
-		Messages: messages,
-		SenderID: w.senderID,
-	}
-	err := json.NewEncoder(buff).Encode(out)
+	err := json.NewEncoder(buff).Encode(v)
 	if err != nil {
 		return err
 	}
+
+	req, err := http.NewRequest("POST", url.String(), buff)
+	req.Header.Set("Authorization", fmt.Sprintf("Token %s", token))
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	resp, err := client.Do(req)
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != statusCode {
+		return ErrInvalidStatusCode
+	}
+	return err
+}
+func (w *writer) ReplyMultiple(messages []OutputMessage) error {
 
 	replyURL, err := w.replyURL()
 	if err != nil {
 		return err
 	}
-
-	req, err := http.NewRequest("POST", replyURL.String(), buff)
-	req.Header.Set("Authorization", fmt.Sprintf("Token %s", w.config.UserToken))
-	req.Header.Set("Content-Type", "application/json; charset=utf-8")
-	resp, err := w.client.Do(req)
-
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusCreated {
+	out := outMessagePayload{
+		Messages: messages,
+		SenderID: w.senderID,
+	}
+	err = sendJSON(w.client, replyURL, out, http.StatusCreated, w.config.UserToken)
+	if err != nil {
 		return ErrResponseNotSent
 	}
-	return err
+	return nil
 }
 
 func (w *writer) String() string {
@@ -113,6 +124,10 @@ type Connector struct {
 	config  ConnConfig
 	handler MessageHandler
 	client  *http.Client
+}
+
+func (c *Connector) Send(message OutputMessage, conversationID, senderID string) error {
+	return nil
 }
 
 // New creates a new connector with

@@ -36,7 +36,7 @@ type InputMessage struct {
 	ChatID       string
 	Participant  string
 	Conversation string
-	Attachment   Attachment `json:"attachment"`
+	Attachment   Attachment
 	Received     time.Time
 }
 

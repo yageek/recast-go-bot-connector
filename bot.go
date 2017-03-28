@@ -5,14 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 )
 
 var (
 	RecastAPIDomain    = "https://api-botconnector.recast.ai"
-	ErrResponseNotSent = errors.New("Errors not sent")
+	ErrResponseNotSent = errors.New("Message not sent")
 )
 
 // MessageHandler is implemented
@@ -66,8 +65,6 @@ func (w *writer) ReplyMultiple(messages []OutputMessage) error {
 		SenderID: w.senderID,
 	}
 	err := json.NewEncoder(buff).Encode(out)
-	value, _ := ioutil.ReadAll(buff)
-	fmt.Println("JSON: ", string(value))
 	if err != nil {
 		return err
 	}
@@ -79,15 +76,12 @@ func (w *writer) ReplyMultiple(messages []OutputMessage) error {
 
 	req, err := http.NewRequest("POST", replyURL.String(), buff)
 	req.Header.Set("Authorization", fmt.Sprintf("Token %s", w.config.UserToken))
-
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	resp, err := w.client.Do(req)
 
-	code := resp.StatusCode
+	defer resp.Body.Close()
 
-	if code != http.StatusOK || code != http.StatusCreated {
-
-		value, _ := ioutil.ReadAll(resp.Body)
-		fmt.Println("Response: ", string(value))
+	if resp.StatusCode != http.StatusCreated {
 		return ErrResponseNotSent
 	}
 	return err

@@ -59,3 +59,18 @@ func nextBus(m botconn.InputMessage, c botconn.ConnConfig) {
 		fmt.Println("Response succeeded")
 	}
 ```
+
+### Broadcast a message to all participants
+
+```go
+    output := botconn.OutputMessage{
+		Content: "Coucou",
+		Kind:    botconn.TextKind,
+	}
+    err := conn.Broadcast(output)
+    if err != nil {
+		fmt.Println("Error:", err)
+	} else {
+		fmt.Println("Response succeeded")
+	}
+```

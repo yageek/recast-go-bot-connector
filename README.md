@@ -43,7 +43,12 @@ func main() {
 
 func nextBus(w botconn.MessageWriter, m botconn.InputMessage) {
 
-	fmt.Printf("Message: %+v config: %+v \n", m, c)
+	// Handle response
+	 output := botconn.OutputMessage{
+		Content: "Coucou",
+		Kind:    botconn.TextKind,
+	}
+	w.Reply(output)
 }
 
 ```

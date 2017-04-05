@@ -2,6 +2,8 @@
 [![Report Cart](http://goreportcard.com/badge/yageek/recast-go-bot-connector)](http://goreportcard.com/report/yageek/recast-go-bot-connector)
 # recast-go-bot-connector
 
+**DEPRECATED: You should switch to the official [Recast SDK Golang](https://github.com/RecastAI/SDK-Golang).** 
+
 Package helping to deal with the [Recast.AI Bot Connector](https://botconnector.recast.ai/)
 
 ## Installation
